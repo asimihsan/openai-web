@@ -17,3 +17,7 @@ PROFILE=retail-admin
 (cd terraform && aws-vault exec "$PROFILE" --region us-west-2 -- make init-dev)
 (cd terraform && aws-vault exec "$PROFILE" --region us-west-2 -- make apply-dev) 
 ```
+
+## References
+
+- https://docs.aws.amazon.com/lambda/latest/dg/images-create.html
