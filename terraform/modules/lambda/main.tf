@@ -1,8 +1,19 @@
-data "archive_file" "lambda" {
-  type        = "zip"
-  source_file = "lambda.js"
-  output_path = "lambda_function_payload.zip"
+data "aws_ecr_authorization_token" "token" {}
+
+resource "aws_ecr_repository" "repository" {
+  name                 = "lambda"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  lifecycle {
+    ignore_changes = all
+  }
 }
+
+resource "null_re"
 
 resource "aws_lambda_function" "websocket_connect" {
   function_name = "doc-example-apigateway-websocket-connect"
@@ -26,11 +37,11 @@ resource "aws_iam_role" "lambda_role" {
   name = "doc-example-apigateway-websocket-chat"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
         Principal = {
           Service = "lambda.amazonaws.com"
         }
@@ -44,7 +55,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
   role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version   = "2012-10-17"
     Statement = [
       {
         Action = [

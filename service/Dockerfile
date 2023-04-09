@@ -4,9 +4,6 @@ FROM ubuntu:22.04 AS base
 # Set the architecture to linux/arm64
 ARG TARGETARCH=arm64
 
-# Define function directory
-ARG FUNCTION_DIR="/function"
-
 # Install Python and other dependencies
 RUN mount=type=cache,target=/var/lib/apt/lists && \
     mount=type=cache,target=/var/cache/apt && \
@@ -16,8 +13,7 @@ RUN mount=type=cache,target=/var/lib/apt/lists && \
     python3-pip \
     python3-venv \
     curl \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+    unzip
 
 # Create a virtual environment and activate it
 RUN python3 -m venv /opt/venv
@@ -31,42 +27,26 @@ WORKDIR /app
 COPY pyproject.toml poetry.lock ./
 
 RUN poetry export > /requirements.txt && \
-    pip3 install -r /requirements.txt --target "${FUNCTION_DIR}" && \
+    pip3 install -r /requirements.txt && \
     rm -f /requirements.txt
 
 # Install the AWS Lambda Runtime Interface Client
-RUN pip install \
-        --target ${FUNCTION_DIR} \
-        awslambdaric
+RUN pip install awslambdaric
 
-# Install Playwright and the Chromium browser
-ENV PYTHONPATH="${FUNCTION_DIR}:${PYTHONPATH}"
+# Install Playwright and the Firefox browser
 RUN mount=type=cache,target=/var/lib/apt/lists && \
     mount=type=cache,target=/var/cache/apt && \
     python -m playwright install-deps && \
     python -m playwright install firefox
 
-# Copy the source code
-COPY . .
-
-# Build the final image
-FROM base AS final
-
-# Copy the virtual environment and function directory from the base image
-COPY --from=base /opt/venv /opt/venv
-COPY --from=base ${FUNCTION_DIR} ${FUNCTION_DIR}
-
-# Set the working directory
-WORKDIR /app
-
-# Add the function directory to the Python path
-ENV PYTHONPATH="${FUNCTION_DIR}:${PYTHONPATH}"
-
-# (Optional) Add Lambda Runtime Interface Emulator and use a script in the ENTRYPOINT for simpler local runs
+# Add Lambda Runtime Interface Emulator and use a script in the ENTRYPOINT for simpler local runs
 # See: https://aws.amazon.com/blogs/aws/new-for-aws-lambda-container-image-support/
 ADD https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/latest/download/aws-lambda-rie /usr/bin/aws-lambda-rie
 COPY entry.sh /
 RUN chmod 755 /usr/bin/aws-lambda-rie /entry.sh
+
+# Copy the source code
+COPY --link . .
 
 # Set the entrypoint and command
 ENTRYPOINT ["/entry.sh"]

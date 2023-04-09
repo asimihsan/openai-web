@@ -17,13 +17,8 @@ class Scraper:
     browser: Browser
 
     def __init__(self):
-        print("p start")
         self.p = sync_playwright().start()
-        print("p started")
-
-        print("browser start")
         self.browser = self.p.firefox.launch(headless=True)
-        print("browser started")
 
     def __enter__(self):
         return self
@@ -32,11 +27,11 @@ class Scraper:
         self.browser.close()
         self.p.stop()
 
-    # @retrying.retry(
-    #     wait_exponential_multiplier=1000,
-    #     wait_exponential_max=10000,
-    #     stop_max_attempt_number=5,
-    # )
+    @retrying.retry(
+        wait_exponential_multiplier=1000,
+        wait_exponential_max=10000,
+        stop_max_attempt_number=5,
+    )
     def get_content(self, url: typing.Any) -> str:
         if isinstance(url, list):
             return "\n".join(self.get_content(url) for url in url)

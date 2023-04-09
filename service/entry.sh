@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-export PYTHONPATH="/opt/venv/lib/python3.10/site-packages:${FUNCTION_DIR}:${PYTHONPATH}"
+set -euo pipefail
 
-if [ -z "${AWS_LAMBDA_RUNTIME_API}" ]; then
-    exec /usr/bin/aws-lambda-rie python -m awslambdaric $1
+if [ -z "${AWS_LAMBDA_RUNTIME_API:-}" ]; then
+    exec /usr/bin/aws-lambda-rie /opt/venv/bin/python -m awslambdaric $1
 else
-    exec python -m awslambdaric $1
+    exec /opt/venv/bin/python -m awslambdaric $1
 fi
