@@ -1,8 +1,8 @@
 # Use Ubuntu 22.04 as the base image
 FROM ubuntu:22.04 AS base
 
-# Set the architecture to linux/amd64
-ARG TARGETARCH=amd64
+# Set the architecture to linux/arm64
+ARG TARGETARCH=arm64
 
 # Define function directory
 ARG FUNCTION_DIR="/function"
@@ -17,18 +17,6 @@ RUN mount=type=cache,target=/var/lib/apt/lists && \
     python3-venv \
     curl \
     unzip \
-    libnss3 \
-    libnspr4 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libgbm1 \
-    libgtk-3-0 \
-    libasound2 \
-    libxshmfence1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a virtual environment and activate it
@@ -52,9 +40,11 @@ RUN pip install \
         awslambdaric
 
 # Install Playwright and the Chromium browser
-RUN pip install --target "${FUNCTION_DIR}" playwright
 ENV PYTHONPATH="${FUNCTION_DIR}:${PYTHONPATH}"
-RUN python -m playwright install chromium
+RUN mount=type=cache,target=/var/lib/apt/lists && \
+    mount=type=cache,target=/var/cache/apt && \
+    python -m playwright install-deps && \
+    python -m playwright install firefox
 
 # Copy the source code
 COPY . .

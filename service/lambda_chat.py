@@ -19,7 +19,7 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 import openai
-import playwright
+import scrape
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -127,6 +127,8 @@ def handle_message(table, connection_id, event_body, apig_management_client):
     return status_code
 
 
+scraper = scrape.Scraper()
+
 def lambda_handler(event, context):
     """
     An AWS Lambda handler that receives events from an API Gateway websocket API
@@ -148,6 +150,15 @@ def lambda_handler(event, context):
     :return: A response dict that contains an HTTP status code that indicates the
              result of handling the event.
     """
+
+    import requests
+    # content = requests.get('https://aws.amazon.com/builders-library/caching-challenges-and-strategies/').text
+    content = scraper.get_content('https://aws.amazon.com/builders-library/caching-challenges-and-strategies/')
+    return {
+        'statusCode': 200,
+        'body': content
+    }
+
     table_name = os.environ['table_name']
     route_key = event.get('requestContext', {}).get('routeKey')
     connection_id = event.get('requestContext', {}).get('connectionId')
