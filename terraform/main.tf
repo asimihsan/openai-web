@@ -10,6 +10,8 @@ module "lambda" {
   source              = "./modules/lambda"
   dynamodb_table_name = module.dynamodb.table_name
   dynamodb_table_arn  = module.dynamodb.table_arn
+  ecr_repository_url  = var.ecr_repository_url
+  image_tag           = var.image_tag
 }
 
 module "apigateway" {

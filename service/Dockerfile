@@ -1,5 +1,4 @@
-# Use Ubuntu 22.04 as the base image
-FROM ubuntu:22.04 AS base
+FROM ubuntu:22.04
 
 # Set the architecture to linux/arm64
 ARG TARGETARCH=arm64
@@ -32,6 +31,8 @@ RUN poetry export > /requirements.txt && \
 
 # Install the AWS Lambda Runtime Interface Client
 RUN pip install awslambdaric
+
+ENV PLAYWRIGHT_BROWSERS_PATH=/tmp/playwright
 
 # Install Playwright and the Firefox browser
 RUN mount=type=cache,target=/var/lib/apt/lists && \

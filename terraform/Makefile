@@ -33,15 +33,3 @@ apply-global:
 
 destroy-global:
 	cd env/global && terraform destroy $(GLOBAL_TF_VARS)
-
-init-dev:
-	terraform init -backend-config=$(DEV_BACKEND_CONFIG)
-
-plan-dev:
-	terraform plan
-
-apply-dev:
-	terraform apply
-
-destroy-dev:
-	terraform destroy

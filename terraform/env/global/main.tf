@@ -2,6 +2,10 @@ provider "aws" {
   region = var.aws_region
 }
 
+module "ecr" {
+  source = "../../modules/ecr"
+}
+
 resource "aws_s3_bucket" "terraform_backend" {
   bucket = var.backend_bucket_name
 }

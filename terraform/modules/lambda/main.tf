@@ -1,28 +1,10 @@
-data "aws_ecr_authorization_token" "token" {}
-
-resource "aws_ecr_repository" "repository" {
-  name                 = "lambda"
-  image_tag_mutability = "MUTABLE"
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
-resource "null_re"
-
 resource "aws_lambda_function" "websocket_connect" {
   function_name = "doc-example-apigateway-websocket-connect"
-  handler       = "lambda_chat.lambda_handler"
-  runtime       = "python3.7"
-
-  code {
-    filename = "lambda.zip"
-  }
+  package_type  = "Image"
+  image_uri     = "${var.ecr_repository_url}:${var.image_tag}"
+  architectures = ["arm64"]
+  timeout       = 30
+  memory_size   = 512
 
   environment {
     variables = {
@@ -37,11 +19,11 @@ resource "aws_iam_role" "lambda_role" {
   name = "doc-example-apigateway-websocket-chat"
 
   assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
-        Action    = "sts:AssumeRole"
-        Effect    = "Allow"
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
         Principal = {
           Service = "lambda.amazonaws.com"
         }
@@ -55,7 +37,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
   role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         Action = [
