@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI, WebSocket
 from pydantic import BaseModel
+import starlette.websockets
 
 import vopenai
 
@@ -29,7 +30,10 @@ openaiWrapper = vopenai.OpenAIWrapper()
 async def completion_websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     while True:
-        data = await websocket.receive_text()
+        try:
+            data = await websocket.receive_text()
+        except starlette.websockets.WebSocketDisconnect:
+            break
         request = CompletionRequest.parse_raw(data)
         for text in openaiWrapper.complete(request.prompt):
             await websocket.send_text(text)
