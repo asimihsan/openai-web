@@ -2,4 +2,9 @@ build-docker:
 	docker buildx build --platform=linux/arm64 -t openai-web-service:latest .
 
 run-docker:
-	docker run --platform=linux/arm64 --privileged -p 9000:8080 openai-web-service:latest
+	docker run \
+		--platform=linux/arm64 \
+		--privileged \
+		-p 8000:8000 \
+		--env-file .env \
+		openai-web-service:latest
