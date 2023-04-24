@@ -23,18 +23,13 @@ class CompletionResponse(BaseModel):
     completion: str
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+openaiWrapper = vopenai.OpenAIWrapper()
+
+@app.websocket("/ws/completion")
+async def completion_websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     while True:
         data = await websocket.receive_text()
-        print(data)
-        await websocket.send_text("pong")
-
-openaiWrapper = vopenai.OpenAIWrapper()
-
-
-@app.post("/completion")
-async def completion(request: CompletionRequest) -> CompletionResponse:
-    response = await openaiWrapper.complete(request.prompt)
-    return CompletionResponse(success=True, error="", completion=response)
+        request = CompletionRequest.parse_raw(data)
+        for text in openaiWrapper.complete(request.prompt):
+            await websocket.send_text(text)
