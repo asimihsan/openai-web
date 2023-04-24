@@ -11,7 +11,8 @@ class OpenAIWrapper:
             raise Exception("OPENAI_API_KEY not found in environment variables")
         openai.api_key = os.getenv("OPENAI_API_KEY")
 
-    def complete(self, prompt, max_tokens=10, temperature=0.0, top_p=1, frequency_penalty=0, presence_penalty=0):
+    def complete(self, prompt, max_tokens=2048, temperature=0.0, top_p=1, frequency_penalty=0, presence_penalty=0):
+        print(prompt)
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[{

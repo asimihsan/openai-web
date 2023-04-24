@@ -29,11 +29,11 @@ openaiWrapper = vopenai.OpenAIWrapper()
 @app.websocket("/ws/completion")
 async def completion_websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    while True:
-        try:
-            data = await websocket.receive_text()
-        except starlette.websockets.WebSocketDisconnect:
-            break
-        request = CompletionRequest.parse_raw(data)
-        for text in openaiWrapper.complete(request.prompt):
-            await websocket.send_text(text)
+    try:
+        data = await websocket.receive_text()
+    except starlette.websockets.WebSocketDisconnect:
+        return
+    request = CompletionRequest.parse_raw(data)
+    for text in openaiWrapper.complete(request.prompt):
+        await websocket.send_text(text)
+    await websocket.close(code=1000, reason="success")
