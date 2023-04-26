@@ -1,7 +1,8 @@
-FROM ubuntu:22.04
+FROM --platform=${TARGETPLATFORM:-linux/arm64} ubuntu:22.04
 
-# Set the architecture to linux/arm64
-ARG TARGETARCH=arm64
+ARG TARGETPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 # Install Python and other dependencies
 RUN mount=type=cache,target=/var/lib/apt/lists && \
@@ -42,5 +43,7 @@ RUN poetry export > /requirements.txt && \
 
 # Copy the source code
 COPY --link . .
+
+EXPOSE 8000
 
 CMD ["poetry", "run", "uvicorn", "http-serve:app", "--host", "0.0.0.0"]

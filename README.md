@@ -42,6 +42,14 @@ Connected (press CTRL+C to quit)
 < ?
 ```
 
+## Push
+
+```shell
+TAG=openai-prompt-0.1
+(cd service && docker buildx build . -t "${TAG}" --platform linux/arm64)
+(cd scripts && ./push-image.sh --tag "${TAG}")
+```
+
 ## References
 
 - https://docs.aws.amazon.com/lambda/latest/dg/images-create.html
