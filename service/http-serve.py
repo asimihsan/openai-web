@@ -20,7 +20,7 @@ SERVER_PRIVATE_KEY: bytes = base64.b64decode(os.getenv("SERVER_PRIVATE_KEY"))
 app = FastAPI()
 
 
-@app.get("/ping")
+@app.get("/p/ping")
 def ping():
     return "healthy"
 
@@ -63,7 +63,7 @@ class Message:
 openaiWrapper = vopenai.OpenAIWrapper()
 
 
-@app.websocket("/ws/completion")
+@app.websocket("/p/ws/completion")
 async def completion_websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
