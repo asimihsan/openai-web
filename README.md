@@ -45,7 +45,7 @@ Connected (press CTRL+C to quit)
 ## Push
 
 ```shell
-TAG=openai-prompt-0.1
+TAG=openai-prompt-0.2
 (cd service && docker buildx build . -t "${TAG}" --platform linux/arm64)
 (cd scripts && ./push-image.sh --tag "${TAG}")
 ```
