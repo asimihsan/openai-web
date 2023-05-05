@@ -2,3 +2,6 @@
 .env
 generated/*
 !generated/.gitkeep
+service/generated/*
+!service/generated/.gitkeep
+
