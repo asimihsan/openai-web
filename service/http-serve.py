@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import base64
+import dataclasses
 import json
 import os
 
@@ -11,6 +12,10 @@ from pydantic import BaseModel
 from nacl.public import PrivateKey, PublicKey, Box, EncryptedMessage
 
 import vopenai
+from generated.proto.secure_connection.v1 import EncryptedData
+from generated.proto.prompt.v1 import (StartCompletionRequest,
+                                       CompletionResponse,
+                                       Role)
 
 load_dotenv()
 APP_PUBLIC_KEY: bytes = base64.b64decode(os.getenv("APP_PUBLIC_KEY"))
@@ -29,16 +34,23 @@ class CompletionRequest(BaseModel):
     prompt: str
 
 
+@dataclasses.dataclass
+class EncryptionResult:
+    nonce: bytes
+    ciphertext: bytes
+
+
 class CryptoWrapper:
     def __init__(self):
         self.box = Box(PrivateKey(SERVER_PRIVATE_KEY), PublicKey(APP_PUBLIC_KEY))
 
-    def encrypt(self, data: bytes) -> bytes:
+    def encrypt(self, data: bytes) -> EncryptionResult:
         encrypted_message: EncryptedMessage = self.box.encrypt(data)
-        return encrypted_message.nonce + encrypted_message.ciphertext
+        return EncryptionResult(
+            nonce=encrypted_message.nonce, ciphertext=encrypted_message.ciphertext)
 
-    def decrypt(self, data: bytes) -> bytes:
-        return self.box.decrypt(data)
+    def decrypt(self, ciphertext: bytes, nonce: bytes) -> bytes:
+        return self.box.decrypt(ciphertext, nonce=nonce)
 
 
 crypto_wrapper = CryptoWrapper()
@@ -66,19 +78,58 @@ openaiWrapper = vopenai.OpenAIWrapper()
 @app.websocket("/p/ws/completion")
 async def completion_websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    print("connection accepted")
     try:
-        serialized: str = await websocket.receive_text()
-        data: bytes = base64.b64decode(json.loads(serialized)["d"])
-        plaintext: bytes = crypto_wrapper.decrypt(data)
-        request = CompletionRequest.parse_raw(plaintext)
-        print(f"received request: {request}")
+        serialized: bytes = await websocket.receive_bytes()
+        data: EncryptedData = EncryptedData().parse(data=serialized)
+        plaintext: bytes = crypto_wrapper.decrypt(
+            ciphertext=data.ciphertext, nonce=data.nonce)
+        request = StartCompletionRequest().parse(data=plaintext)
+        # print(f"received request: {request}")
 
-        for text in openaiWrapper.complete(request.prompt):
-            ciphertext = crypto_wrapper.encrypt(text.encode("utf-8"))
-            message = Message(ciphertext)
-            await websocket.send_text(json.dumps({"d": message.d}))
+        converted_request = convert_start_completion_response_to_messages(request)
+        for i, text in enumerate(openaiWrapper.complete(converted_request)):
+            completion_response = CompletionResponse()
+
+            # TODO conversation IDs
+            completion_response.conversation_id = ""
+            completion_response.text = text
+            completion_response.counter = i
+            completion_response.is_final = False
+            # print(f"sending response: {completion_response}")
+
+            ciphertext = crypto_wrapper.encrypt(bytes(completion_response))
+            message = EncryptedData()
+            message.nonce = ciphertext.nonce
+            message.ciphertext = ciphertext.ciphertext
+            await websocket.send_bytes(bytes(message))
+
+        completion_response = CompletionResponse()
+        # TODO conversation IDs
+        completion_response.conversation_id = ""
+        completion_response.is_final = True
+        ciphertext = crypto_wrapper.encrypt(bytes(completion_response))
+        message = EncryptedData()
+        message.nonce = ciphertext.nonce
+        message.ciphertext = ciphertext.ciphertext
+        await websocket.send_bytes(bytes(message))
 
         await websocket.close(code=1000, reason="success")
     except starlette.websockets.WebSocketDisconnect:
         print("websocket disconnected")
         return
+
+
+def convert_start_completion_response_to_messages(
+        response: StartCompletionRequest) -> list[dict]:
+    result = []
+    for message in response.stanzas:
+        role: str
+        if message.role == Role.USER:
+            role = "user"
+        elif message.role == Role.ASSISTANT:
+            role = "assistant"
+        else:
+            raise Exception(f"unknown role: {message.role}")
+        result.append({"role": role, "content": message.content})
+    return result

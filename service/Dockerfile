@@ -36,10 +36,7 @@ RUN pip install poetry
 # Copy the pyproject.toml and poetry.lock files
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
-
-RUN poetry export > /requirements.txt && \
-    pip3 install -r /requirements.txt && \
-    rm -f /requirements.txt
+RUN poetry install
 
 # Copy the source code
 COPY --link . .

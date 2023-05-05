@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 import openai
 import openai.error
 import os
@@ -12,8 +14,26 @@ class OpenAIWrapper:
             raise Exception("OPENAI_API_KEY not found in environment variables")
         openai.api_key = os.getenv("OPENAI_API_KEY")
 
-    def complete(self, prompt, max_tokens=2048, temperature=0.0, top_p=1, frequency_penalty=0, presence_penalty=0):
-        print(prompt)
+    def complete(self,
+                 conversation: list[dict],
+                 max_tokens=2048,
+                 temperature=0.0,
+                 top_p=1,
+                 frequency_penalty=0,
+                 presence_penalty=0):
+        """
+        Complete a conversation.
+
+        :param conversation: A list of dictionary with two keys, "role" and "content".
+        "role" is either "user" or "assistant" and "text" is the text of the message.
+        :param max_tokens: The maximum number of tokens to generate.
+        :param temperature: What sampling temperature to use. Higher values means the model will take more risks.
+        :param top_p: An alternative to sampling with temperature, called nucleus sampling, where the model considers
+        the results of the tokens with top_p probability mass.
+        :param frequency_penalty: What sampling temperature to use. Higher values means the model will take more risks.
+        :param presence_penalty: What sampling temperature to use. Higher values means the model will take more risks.
+        :return: A generator that yields the text of the assistant's response.
+        """
 
         # If we get openai.error.InvalidRequestError with 'This model's maxium context length', then we will try up to 2 more
         # times and half the max_tokens each time. If all three attempts fail we will respond with text 'Error: max context length'
@@ -25,10 +45,7 @@ class OpenAIWrapper:
             try:
                 response = openai.ChatCompletion.create(
                     model="gpt-4",
-                    messages=[{
-                        "role": "user",
-                        "content": prompt,
-                    }],
+                    messages=conversation,
                     max_tokens=tokens,
                     temperature=temperature,
                     top_p=top_p,
