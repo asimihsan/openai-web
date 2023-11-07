@@ -13,17 +13,17 @@ class OpenAIWrapper:
     def __init__(self):
         if "OPENAI_API_KEY" not in os.environ:
             raise Exception("OPENAI_API_KEY not found in environment variables")
-        self.client = openai.AsyncOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
+        self.client = openai.AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    async def complete(self,
-                 conversation: list[dict],
-                 max_tokens=2048,
-                 temperature=0.0,
-                 top_p=1,
-                 frequency_penalty=0,
-                 presence_penalty=0):
+    async def complete(
+        self,
+        conversation: list[dict],
+        max_tokens=4095,
+        temperature=0.0,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+    ):
         """
         Complete a conversation.
 
@@ -38,36 +38,22 @@ class OpenAIWrapper:
         :return: A generator that yields the text of the assistant's response.
         """
 
-        # If we get openai.error.InvalidRequestError with 'This model's maxium context length', then we will try up to 2 more
-        # times and half the max_tokens each time. If all three attempts fail we will respond with text 'Error: max context length'
-        # and log the error.
-        tokens_schedule = [max_tokens, max_tokens // 2, max_tokens // 4]
-        for tokens in tokens_schedule:
-            try:
-                async for chunk in await self.client.chat.completions.create(
-                    model="gpt-4-1106-preview",
-                    messages=conversation,
-                    max_tokens=tokens,
-                    temperature=temperature,
-                    top_p=top_p,
-                    frequency_penalty=frequency_penalty,
-                    presence_penalty=presence_penalty,
-                    stream=True,
-                ):
-                    choice = chunk.choices[0]
-                    finish_reason = choice.finish_reason  # None, "stop", or "length"
-                    delta = choice.delta
+        async for chunk in await self.client.chat.completions.create(
+            model="gpt-4-1106-preview",
+            messages=conversation,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
+            stream=True,
+        ):
+            choice = chunk.choices[0]
+            finish_reason = choice.finish_reason  # None, "stop", or "length"
+            delta = choice.delta
 
-                    if  delta.role == "assistant":
-                        continue
+            if delta.role == "assistant":
+                continue
 
-                    if finish_reason is None:
-                        yield delta.content
-                return
-            except openai.APIStatusError as e:
-                if "This model's maximum context length" in e.response:
-                    continue
-                else:
-                    raise e
-
-        return
+            if finish_reason is None:
+                yield delta.content

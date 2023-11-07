@@ -21,4 +21,4 @@ run-lima:
 		openai-web-service:latest
 
 run-local:
-	poetry run uvicorn http-serve:app --host 0.0.0.0 --reload
+	poetry run uvicorn http-serve:app --host 127.0.0.1 --reload
