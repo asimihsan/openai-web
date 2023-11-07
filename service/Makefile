@@ -19,3 +19,6 @@ run-lima:
 		-p 8000:8000 \
 		--env-file .env \
 		openai-web-service:latest
+
+run-local:
+	poetry run uvicorn http-serve:app --host 0.0.0.0 --reload

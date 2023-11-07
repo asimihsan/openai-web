@@ -2,7 +2,14 @@
 
 ## Usage
 
-First set up Terraform backend in the `global` environment. This is where the state for all environments is stored.
+poetry setup
+
+```shell
+cd service
+poetry env use $(pyenv which python3) && poetry install --no-root
+```
+
+Set up Terraform backend in the `global` environment. This is where the state for all environments is stored.
 
 ```shell
 PROFILE=retail-admin

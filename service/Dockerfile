@@ -3,19 +3,43 @@ FROM --platform=${TARGETPLATFORM:-linux/arm64} ubuntu:22.04
 ARG TARGETPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
+ARG PYTHON_VERSION=3.11.6
 
-# Install Python and other dependencies
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYENV_ROOT /root/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PYENV_ROOT/bin:$PATH
+
+# Install Python and other dependencies using pyenv
 RUN mount=type=cache,target=/var/lib/apt/lists && \
     mount=type=cache,target=/var/cache/apt && \
     apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    build-essential \
-    python3 \
-    python3-dev \
-    python3-pip \
-    python3-venv \
-    curl \
-    unzip
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        curl \
+        git \
+        libbz2-dev \
+        libffi-dev \
+        liblzma-dev \
+        libncurses5-dev \
+        libreadline-dev \
+        libsqlite3-dev \
+        libssl-dev \
+        libxml2-dev \
+        libxmlsec1-dev \
+        llvm \
+        make \
+        mecab-ipadic-utf8 \
+        tk-dev \
+        wget \
+        xz-utils \
+        zlib1g-dev && \
+        curl https://pyenv.run | bash && \
+        pyenv update && \
+#        PYTHON_CFLAGS=-march=native CONFIGURE_OPTS='--enable-optimizations --with-lto' \
+          pyenv install $PYTHON_VERSION && \
+        pyenv global $PYTHON_VERSION && \
+        pyenv rehash
 
 # Create a virtual environment and activate it
 RUN python3 -m venv /opt/venv

@@ -1,3 +1,5 @@
+import collections
+import re
 import sys
 
 import retrying
@@ -13,12 +15,13 @@ class Scraper:
     """ Scraper is a context manager that provides a playwright browser instance.
     """
     p: Playwright
-    extractor: Extractor = extractors.ArticleExtractor()
+    extractor: Extractor
     browser: Browser
 
-    def __init__(self):
+    def __init__(self, extractor: Extractor = extractors.ArticleExtractor()):
         self.p = sync_playwright().start()
         self.browser = self.p.firefox.launch(headless=True)
+        self.extractor = extractor
 
     def __enter__(self):
         return self
@@ -54,7 +57,17 @@ class Scraper:
         return self.extractor.get_content(clean_html_content)
 
 
+full_extractor_matcher: re.Pattern = re.compile(r"news\.ycombinator\.com")
+
+
+def get_extractor(url: str) -> Extractor:
+    if full_extractor_matcher.search(url):
+        return extractors.KeepEverythingExtractor()
+    return extractors.ArticleExtractor()
+
+
 if __name__ == "__main__":
     url = sys.argv[1]
-    with Scraper() as scraper:
+    extractor = get_extractor(url)
+    with Scraper(extractor=extractor) as scraper:
         print(scraper.get_content(url))

@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 import vopenai
 from generated.proto.prompt.v1 import StartCompletionRequest, CompletionResponse, Role
-from generated.proto.secure_connection.v1 import EncryptedData
+from generated.proto.secure_connection.v1 import EncryptedData, ClientEphemeralKey, ServerEphemeralKey
 
 load_dotenv()
 APP_PUBLIC_KEY: bytes = base64.b64decode(os.getenv("APP_PUBLIC_KEY"))
@@ -123,6 +123,15 @@ async def send_data(websocket, queue):
 async def completion_websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     print("connection accepted")
+
+    # server_ephemeral_private_key = PrivateKey.generate()
+    # server_ephemeral_public_key = server_ephemeral_private_key.public_key
+    # service_nonce: bytes = os.urandom(16)
+    #
+    # client_ephemeral_public_key_serialized: bytes = await websocket.receive_bytes()
+    # client_ephemeral_public_key: ClientEphemeralKey = ClientEphemeralKey().parse(
+    #     data=client_ephemeral_public_key_serialized
+    # )
 
     serialized: bytes = await websocket.receive_bytes()
     data: EncryptedData = EncryptedData().parse(data=serialized)
