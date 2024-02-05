@@ -10,7 +10,7 @@ beautifulsoup4 = "^4.12.2"
 betterproto = {git = "https://github.com/danielgtaylor/python-betterproto.git", rev = "bd7de203e16e949666b2844b3dec1eb7c4ed523c"}
 boilerpy3 = "^1.0.7"
 boto3 = "^1.28.79"
-fastapi = "^0.104.1"
+fastapi = "^0.109.1"
 html5lib = "^1.1"
 ipython = "^8.17.2"
 openai = {extras = ["embeddings", "wandb", "datalib"], version = "^1.1.1"}
